@@ -7,6 +7,9 @@ import styles from "./Shelter.module.css";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useHookFormMask } from "use-mask-input";
+import { Toaster, toast } from "sonner";
+import { updateShelter } from "../../../services/shelter/updateShelter";
+import { useQueryClient } from "@tanstack/react-query";
 
 const shelterSchema = z.object({
   name: z
@@ -38,9 +41,29 @@ export function Shelter() {
   });
 
   const registerWithMask = useHookFormMask(register);
+  const queryClient = useQueryClient();
 
-  function submit({ name, email, phone, whatsApp }: ShelterSchema) {
-    console.log(name, email, phone, whatsApp);
+  async function submit({ name, email, phone, whatsApp }: ShelterSchema) {
+    const toastId = toast.loading("Salvando dados");
+
+    try {
+      await updateShelter({
+        name,
+        email,
+        phone: phone.replace(/\D/g, ""),
+        whatsApp: whatsApp.replace(/\D/g, ""),
+      });
+      queryClient.invalidateQueries({ queryKey: ["get-shelter"] });
+      toast.success("Dados salvos com sucesso", {
+        id: toastId,
+        closeButton: true,
+      });
+    } catch (error) {
+      toast.error("Não foi possível salvar os dados", {
+        id: toastId,
+        closeButton: true,
+      });
+    }
   }
 
   return (
@@ -70,7 +93,7 @@ export function Shelter() {
         <div>
           <Input
             label="Whatsapp"
-            {...registerWithMask("whatsApp", ["99 [9]9999-9999"])}
+            {...registerWithMask("whatsApp", ["99 9999-9999", "99 99999-9999"])}
           />
           {formState.errors?.whatsApp && (
             <p className={styles.formError}>
