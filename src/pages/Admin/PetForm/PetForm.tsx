@@ -10,6 +10,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { toast } from "sonner";
+import { addPet } from "../../../services/pets/addPet";
+
 enum FormStatus {
   ADD = "add",
   EDIT = "edit",
@@ -38,11 +41,41 @@ export function PetForm() {
   });
   const status = id ? FormStatus.EDIT : FormStatus.ADD;
 
-  function submit({ name, type, size, gender, bio }: PetSchema) {
-    console.log(name);
-  }
+  //   function submit({ name, type, size, gender, bio }: PetSchema) {
+  //     console.log(name);
+  //   }
 
-  console.log({ formState });
+  //   console.log({ formState });
+
+  async function submit({ name, type, size, gender, bio }: PetSchema) {
+    const MESSAGE_BY_STATUS = {
+      add: {
+        loading: `Salvando ${name}`,
+        success: `${name} criado com sucesso.`,
+        error: `Não foi possível criar ${name}.`,
+      },
+      edit: {
+        loading: `Editando ${name}`,
+        success: `${name} editado com sucesso.`,
+        error: `Não foi possível editar ${name}.`,
+      },
+    };
+
+    const toastId = toast.loading(MESSAGE_BY_STATUS[status].loading);
+
+    try {
+      const { id } = await addPet({ name, type, size, gender, bio });
+      console.log({ id });
+
+      toast.success(MESSAGE_BY_STATUS[status].success, {
+        id: toastId,
+      });
+    } catch {
+      toast.error(MESSAGE_BY_STATUS[status].error, {
+        id: toastId,
+      });
+    }
+  }
 
   return (
     <Panel>
